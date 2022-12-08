@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Expert;
 use App\Models\ExpertDays;
+use App\Models\ExpertDetails;
 use App\Models\User;
 use App\Models\WeekDays;
 use Illuminate\Http\Request;
@@ -43,6 +43,7 @@ class HomeController extends Controller
             );
         }
 
+
         //Check if the password and email are correct
         $credentials = request(['email', 'password']);
         if (!auth()->attempt($credentials)) {
@@ -59,21 +60,11 @@ class HomeController extends Controller
         $tokenResult = $user->createToken('Personal Access Token');
         $token = $tokenResult->plainTextToken;
 
-        if($user->skills){
-            return response()->json(
-                [
-                    'token' => $token,
-                    'ie_expert'=>1,
-                    'user' => $user,
-                ]
-            );
-
-        }
 
         return response()->json(
             [
                 'token' => $token,
-                'ie_expert'=>0,
+                'ie_expert' => 0,
                 'user' => $user,
 
             ]
@@ -85,113 +76,91 @@ class HomeController extends Controller
     //Register
     public function register(Request $request)
     {
-        # code...
 
-        if ($request->only('is_expert')) {
-            //start expert register
+
+
+        if ($request->is_expert) {
             $validator = Validator::make($request->all(), [
                 'name' => 'required',
-                'email' => 'required|string|email|max:100|unique:experts|unique:users',
+                'email' => 'required|string|email|max:100|unique:users',
                 'password' => 'required|string|min:6',
                 'phone' => 'required|string',
                 'address' => 'required|string',
                 'skills' => 'required|string',
                 'wallet' => 'required',
-                'days'=>'required',
-                'start_day'=>'required',
-                'end_day'=>'required',
+                'days' => 'required',
+                'start_day' => 'required',
+                'end_day' => 'required',
+                'profile_picture',
+                'is_expert' => 'required'
+            ]);
+        } else {
+            $validator = Validator::make(
+                $request->only('name', 'email', 'password', 'phone', 'address', 'wallet', 'is_expert'),
+                [
+                    'name' => 'required',
+                    'email' => 'required|string|email|max:100|unique:users',
+                    'password' => 'required|string|min:6',
+                    'phone' => 'required|string',
+                    'address' => 'required|string',
+                    'wallet' => 'required',
+                    'is_expert' => 'required'
+                ]
+            );
+        }
+
+        if ($validator->fails()) {
+            return response()->json(
+                [
+                    'message' => $validator->errors()->first()
+                ],
+                401
+            );
+        }
+
+        //create new expert
+        $expert = User::create(array_merge(
+            $validator->validated(),
+            ['password' => bcrypt($request->password)]
+        ));
+
+
+
+        if ($request->is_expert) {
+            $expertDetails = ExpertDetails::create([
+                'skills' => $request->skills,
+                'profile_picture' => $request->profile_picture,
+                'users_id' => $expert->id,
+                'updated_at'=>now(),
+                'created_at'=>now(),
             ]);
 
-            if ($validator->fails()) {
-                return response()->json(
-                    [
-                        'message' => $validator->errors()->first()
-                    ],
-                    401
-                );
-            }
-
-            //create new expert
-            $expert = Expert::create(array_merge(
-                $validator->validated(),
-                ['password' => bcrypt($request->password)]
-            ));
-
             $details = $validator->validated();
-
-            // return response()->json(
-            //     [
-            //         $expert->id
-            //     ]
-            // );
-
-            for($i = 0 ; $i<count($details['days']) ; $i++){
+            for ($i = 0; $i < count($details['days']); $i++) {
                 DB::enableQueryLog();
                 $weekdays = WeekDays::where('name', $details['days'][$i])->first();
                 $expertDays = ExpertDays::create(
                     [
-                        'experts_id'=>$expert->id,
-                        'weekdays_id'=> $weekdays->id,
-                        'start_day'=>date('Y-m-d H:i:s' , strtotime($details['start_day'])),
-                        'end_day'=>date('Y-m-d H:i:s', strtotime($details['end_day'])),
+                        'users_id' => $expert->id,
+                        'weekdays_id' => $weekdays->id,
+                        'start_day' => date('Y-m-d H:i:s', strtotime($details['start_day'])),
+                        'end_day' => date('Y-m-d H:i:s', strtotime($details['end_day'])),
                     ]
-                    );
-            }
-
-
-            //generate new access token
-            $tokenResult = $expert->createToken('Personal Access Token');
-            $token = $tokenResult->plainTextToken;
-
-            return response()->json(
-                [
-                    'message'=>'Expert successfully registered',
-                    'token' => $token,
-                    'user' => $expert
-                ]
-            );
-            //end expert
-        } else {
-            //start user register
-            $validator = Validator::make($request->all(), [
-                'name' => 'required',
-                'email' => 'required|string|email|max:100|unique:experts|unique:users',
-                'password' => 'required|string|min:6',
-                'phone' => 'required|string',
-                'address' => 'required|string',
-                'wallet' => 'required',
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json(
-                    [
-                        'message' => $validator->errors()->first()
-                    ],
-                    401
                 );
             }
-
-            //create new user
-            $user = User::create(array_merge(
-                $validator->validated(),
-                ['password' => bcrypt($request->password)]
-            ));
-
-            //generate new access token
-            $tokenResult = $user->createToken('Personal Access Token');
-            $token = $tokenResult->plainTextToken;
-
-            return response()->json(
-                [
-                    'message'=>'User successfully registered',
-                    'token' => $token,
-                    'user' => $user
-                ]
-            );
-
-            //end user
-
         }
+
+        //generate new access token
+        $tokenResult = $expert->createToken('Personal Access Token');
+        $token = $tokenResult->plainTextToken;
+
+        return response()->json(
+            [
+                'message' => 'Expert successfully registered',
+                'token' => $token,
+                'user' => $expert
+            ]
+        );
     }
 
 
@@ -202,9 +171,8 @@ class HomeController extends Controller
         $request->user()->currentAccessToken()->delete();
         return response()->json(
             [
-                'message'=>'Successfully logged out'
+                'message' => 'Successfully logged out'
             ]
         );
     }
-
 }

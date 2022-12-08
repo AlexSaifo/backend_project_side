@@ -8,19 +8,20 @@ use Illuminate\Database\Eloquent\Model;
 class ExpertDays extends Model
 {
     use HasFactory;
-    protected $table = 'expertdays';
+    protected $table = 'expert_days';
     protected $fillable = [
         'id',
         'start_day',
         'end_day',
-        'experts_id',
-        'weekdays_id'
+        'users_id',
+        'weekdays_id',
+        
     ];
 
-    public function experts()
+    public function users()
     {
         # code...
-        return $this->hasMany(Expert::class);
+        return $this->hasMany(User::class);
     }
 
     public function weekdays()

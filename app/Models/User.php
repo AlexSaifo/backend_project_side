@@ -25,7 +25,7 @@ class User extends Authenticatable
         'password',
         'address',
         'phone',
-        'profile_picture',
+        'is_expert',
         'wallet',
     ];
 
@@ -47,4 +47,18 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+
+
+    public function userDetails()
+    {
+        # code...
+        return $this->hasOne(userDetails::class);
+    }
+
+    public function expertDays()
+    {
+        # code...
+        return $this->belongsTo(ExpertDays::class);
+    }
 }

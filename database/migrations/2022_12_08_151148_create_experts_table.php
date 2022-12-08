@@ -13,19 +13,13 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('experts', function (Blueprint $table) {
+        Schema::create('expert_detail', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->string('phone');
-            $table->string('address');
             $table->string('skills');
-            $table->double('wallet');
             $table->integer('rate')->default(1);
+            $table->unsignedBigInteger('users_id')->uniqid();
+            $table->foreign('users_id')->references('id')->on('users')->onDelete('cascade');
             $table->string('profile_picture')->nullable();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
-            $table->rememberToken();
             $table->timestamps();
         });
     }

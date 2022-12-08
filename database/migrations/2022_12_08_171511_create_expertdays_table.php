@@ -13,12 +13,13 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('expertdays', function (Blueprint $table) {
+        Schema::create('expert_days', function (Blueprint $table) {
             $table->id();
             $table->dateTime('start_day');
             $table->dateTime('end_day');
-            $table->foreignId('experts_id')->constrained()->onDelete('cascade');
-            $table->foreignId('weekdays_id')->constrained()->onDelete('cascade');
+            $table->foreignId('users_id')->constrained()->onDelete('cascade');
+            $table->unsignedBigInteger('weekdays_id')->uniqid();
+            $table->foreign('weekdays_id')->references('id')->on('week_days')->onDelete('cascade');
             $table->timestamps();
         });
     }

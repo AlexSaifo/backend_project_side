@@ -9,7 +9,7 @@ class WeekDays extends Model
 {
     use HasFactory;
 
-    protected $table = 'weekdays';
+    protected $table = 'week_days';
     protected $fillable = [
         'name',
         'id'
