@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\HomeController;
+use App\Models\Consultings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -24,10 +25,11 @@ Route::post('/register' , [HomeController::class , 'register'])->name('home.regi
 
 
 Route::group(['middleware' => 'auth:sanctum'] , function(){
-
+    Route::get('/home' , [HomeController::class , 'home'])->name('home.home');
     Route::get('/logout' , [HomeController::class , 'logout'])->name('home.logout');
 });
 
-Route::get('/home' , [HomeController::class , 'home'])->name('home.home');
+Route::get('/consultings' , [HomeController::class , 'getConsultings'])->name('home.getConsultings');
+
 
 

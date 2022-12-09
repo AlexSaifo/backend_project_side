@@ -15,7 +15,7 @@ class ExpertDetails extends Model
         'skills',
         'profile_picture',
         'rate',
-        'users_id',
+        'user_id',
         'updated_at',
         'created_at'
 

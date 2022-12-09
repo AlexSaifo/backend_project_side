@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             WeekDaysTableSeeder::class,
+            ConsultingsTableSeeder::class
         ]);
     }
 }

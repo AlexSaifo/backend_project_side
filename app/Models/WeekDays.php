@@ -16,6 +16,6 @@ class WeekDays extends Model
     ];
 
     public function expertdays(){
-        return $this->belongsTo(ExpertDays::class);
+        return $this->hasMany(ExpertDays::class);
     }
 }

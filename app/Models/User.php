@@ -53,12 +53,18 @@ class User extends Authenticatable
     public function userDetails()
     {
         # code...
-        return $this->hasOne(userDetails::class);
+        return $this->hasOne(ExpertDetails::class);
     }
 
     public function expertDays()
     {
         # code...
-        return $this->belongsTo(ExpertDays::class);
+        return $this->hasMany(ExpertDays::class);
+    }
+
+    public function expertConsultings()
+    {
+        # code...
+        return $this->hasMany(ExpertConsultings::class);
     }
 }

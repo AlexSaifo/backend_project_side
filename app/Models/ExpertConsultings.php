@@ -5,17 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class ExpertDays extends Model
+class ExpertConsultings extends Model
 {
     use HasFactory;
-    protected $table = 'expert_days';
+
+    protected $table = 'expert_consultings';
     protected $fillable = [
         'id',
-        'start_day',
-        'end_day',
         'user_id',
-        'weekdays_id',
-
+        'consultings_id',
     ];
 
     public function users()
@@ -24,9 +22,9 @@ class ExpertDays extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function weekdays()
+    public function consultings()
     {
         # code...
-        return $this->belongsTo(WeekDays::class);
+        return $this->belongsTo(Consultings::class);
     }
 }

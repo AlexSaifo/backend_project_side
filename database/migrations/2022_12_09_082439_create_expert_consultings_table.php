@@ -13,13 +13,10 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('expert_days', function (Blueprint $table) {
+        Schema::create('expert_consultings', function (Blueprint $table) {
             $table->id();
-            $table->time('start_day');
-            $table->time('end_day');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->unsignedBigInteger('weekdays_id')->uniqid();
-            $table->foreign('weekdays_id')->references('id')->on('week_days')->onDelete('cascade');
+            $table->foreignId('consultings_id')->constrained()->onDelete('cascade');
             $table->timestamps();
         });
     }
@@ -31,6 +28,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('expertdays');
+        Schema::dropIfExists('expert_consultings');
     }
 };
