@@ -66,17 +66,20 @@ class HomeController extends Controller
 
         if ($user->is_expert) {
 
-            $expertDays =  $user->expertDays()->get();
+            $expertDays =  $user->expertDays()->get()->pluck('weekdays_id')->all();
             $expertDayssArray = [];
             foreach ($expertDays as $expertDay) {
-                $expertDayssArray[] = $expertDay->weekdays()->get()->first()->name;
+                $expertDayssArray[] = WeekDays::where('id' , $expertDays)->pluck('id' , 'name')->all();
             }
 
-            $expertConsultings = $user->expertConsultings()->get();
+
+            $expertConsultings = $user->expertConsultings()->get()->pluck('consultings_id')->all();
             $expertConsultingsArray = [];
             foreach ($expertConsultings as $Consulting) {
-                $expertConsultingsArray[] = $Consulting->consultings()->get()->first()->name;
+                $expertConsultingsArray[] = Consultings::where('id', $expertConsultings)->pluck('id', 'name')->all();
             }
+
+
             $expertDetails = $user->userDetails()->get()->first();
 
             return response()->json(
@@ -85,8 +88,8 @@ class HomeController extends Controller
                     'user' => $user,
                     'user_detail' => [
                         'expert_days' => $expertDayssArray,
-                        'start_day' => $expertDays->first()->start_day,
-                        'end_day' => $expertDays->first()->end_day,
+                        'start_day' => $user->expertDays()->get()->first()->start_day,
+                        'end_day' => $user->expertDays()->get()->first()->end_day,
                         'consultings' => $expertConsultingsArray,
                         'profile_picture' => $expertDetails->profile_picture,
                         'rate' => $expertDetails->rate,
@@ -188,26 +191,30 @@ class HomeController extends Controller
             $details = $validator->validated();
 
             //insert expertd days from inputs to the Expert Days table
+            $weekdaysResponse = [];
             for ($i = 0; $i < count($details['days']); $i++) {
                 //get the week day id
-                $weekdays = WeekDays::where('name', $details['days'][$i])->first();
+                $weekdays = WeekDays::where('name', $details['days'][$i])->pluck('id', 'name')->all();
+                $weekdaysResponse[] = $weekdays;
                 $expertDays = ExpertDays::create(
                     [
                         'user_id' => $expert->id,
-                        'weekdays_id' => $weekdays->id,
-                        'start_day' => date('H:i:s', intval($details['start_day'])),
-                        'end_day' => date('H:i:s', intval($details['end_day'])),
+                        'weekdays_id' => $weekdays[$details['days'][$i]],
+                        'start_day' => $details['start_day'],
+                        'end_day' => $details['end_day'],
                     ]
                 );
             }
             //insert consultings from inputs to the ExpertConsultings table
+            $consultingsResponse = [];
             for ($i = 0; $i < count($details['consultings']); $i++) {
                 //get the consulting id
-                $consulting = Consultings::where('name', $details['consultings'][$i])->first();
+                $consulting = Consultings::where('name', $details['consultings'][$i])->pluck('id', 'name')->all();
+                $consultingsResponse[] = $consulting;
                 $expertConsulting = ExpertConsultings::create(
                     [
                         'user_id' => $expert->id,
-                        'consultings_id' => $consulting->id,
+                        'consultings_id' => $consulting[$details['consultings'][$i]],
                     ]
                 );
             }
@@ -220,10 +227,10 @@ class HomeController extends Controller
                     'token' => $token,
                     'user' => $expert,
                     'user_detail' => [
-                        'expert_days' => $details['days'],
+                        'expert_days' => $weekdaysResponse,
                         'start_day' => $details['start_day'],
                         'end_day' => $details['end_day'],
-                        'consultings' => $details['consultings'],
+                        'consultings' => $consultingsResponse,
                         'profile_picture' => $details['profile_picture'] = $request->profile_picture,
                         'rate' => 1,
                         'skills' => $details['skills']
@@ -255,7 +262,7 @@ class HomeController extends Controller
         );
     }
 
-
+    //get all Consultings
     public function getConsultings()
     {
         # code...
@@ -267,7 +274,7 @@ class HomeController extends Controller
 
     public function consultingsSearch(Request $name)
     {
-        
+
 
     }
 

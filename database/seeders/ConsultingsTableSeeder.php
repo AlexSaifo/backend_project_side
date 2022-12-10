@@ -18,31 +18,31 @@ class ConsultingsTableSeeder extends Seeder
         //
         Consultings::Create(
             [
-                'name' => 'Medical consultings'
+                'name' => 'Medical Consultings'
             ]
         );
 
         Consultings::Create(
             [
-                'name' => 'Professional consultings'
+                'name' => 'Professional Consultings'
             ]
         );
 
         Consultings::Create(
             [
-                'name' => 'Psychological consultings'
+                'name' => 'Psychological Consultings'
             ]
         );
 
         Consultings::Create(
             [
-                'name' => 'Family consultings'
+                'name' => 'Family Consultings'
             ]
         );
 
         Consultings::Create(
             [
-                'name' => 'Business / management consultings'
+                'name' => 'Business / management Consultings'
             ]
         );
 
