@@ -17,6 +17,7 @@ return new class extends Migration
             $table->id();
             $table->string('skills');
             $table->integer('rate')->default(1);
+            $table->double('cost');
             $table->unsignedBigInteger('user_id')->uniqid();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->string('profile_picture')->nullable();

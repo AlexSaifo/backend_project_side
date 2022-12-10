@@ -67,18 +67,10 @@ class HomeController extends Controller
         if ($user->is_expert) {
 
             $expertDays =  $user->expertDays()->get()->pluck('weekdays_id')->all();
-            $expertDayssArray = [];
-            foreach ($expertDays as $expertDay) {
-                $expertDayssArray[] = WeekDays::where('id' , $expertDays)->pluck('id' , 'name')->all();
-            }
-
+            $expertDayssArray = WeekDays::select('name', 'id')->whereIn('id', $expertDays)->get();;
 
             $expertConsultings = $user->expertConsultings()->get()->pluck('consultings_id')->all();
-            $expertConsultingsArray = [];
-            foreach ($expertConsultings as $Consulting) {
-                $expertConsultingsArray[] = Consultings::where('id', $expertConsultings)->pluck('id', 'name')->all();
-            }
-
+            $expertConsultingsArray = Consultings::select('name', 'id')->whereIn('id', $expertConsultings)->get();
 
             $expertDetails = $user->userDetails()->get()->first();
 
@@ -93,11 +85,13 @@ class HomeController extends Controller
                         'consultings' => $expertConsultingsArray,
                         'profile_picture' => $expertDetails->profile_picture,
                         'rate' => $expertDetails->rate,
-                        'skills' => $expertDetails->skills
+                        'skills' => $expertDetails->skills,
+                        'cost' => $expertDetails->cost
 
                     ],
 
-                ]
+                ],
+                200
             );
         }
 
@@ -106,7 +100,8 @@ class HomeController extends Controller
                 'token' => $token,
                 'user' => $user,
 
-            ]
+            ],
+            200
         );
     }
 
@@ -125,6 +120,7 @@ class HomeController extends Controller
                 'address' => 'required|string',
                 'skills' => 'required|string',
                 'wallet' => 'required',
+                'cost' => 'required',
                 'days' => 'required',
                 'consultings' => 'required',
                 'start_day' => 'required',
@@ -173,17 +169,17 @@ class HomeController extends Controller
             if ($request->hasFile('profile_picture')) {
 
                 $picture = $request->profile_picture;
-                $fileName = "profile-picture-{$expert->id}.".$picture->getClientOriginalExtension();
+                $fileName = "profile-picture-{$expert->id}." . $picture->getClientOriginalExtension();
                 $picture->move(public_path('upload'), $fileName);
 
                 $request->profile_picture = $fileName;
-
             }
 
-            $expertDetails = ExpertDetails::create([
+            ExpertDetails::create([
                 'skills' => $request->skills,
                 'profile_picture' => $request->profile_picture,
                 'user_id' => $expert->id,
+                'cost' => $request->cost,
                 'updated_at' => now(),
                 'created_at' => now(),
             ]);
@@ -191,34 +187,26 @@ class HomeController extends Controller
             $details = $validator->validated();
 
             //insert expertd days from inputs to the Expert Days table
-            $weekdaysResponse = [];
-            for ($i = 0; $i < count($details['days']); $i++) {
-                //get the week day id
-                $weekdays = WeekDays::where('name', $details['days'][$i])->pluck('id', 'name')->all();
-                $weekdaysResponse[] = $weekdays;
-                $expertDays = ExpertDays::create(
-                    [
-                        'user_id' => $expert->id,
-                        'weekdays_id' => $weekdays[$details['days'][$i]],
-                        'start_day' => $details['start_day'],
-                        'end_day' => $details['end_day'],
-                    ]
-                );
-            }
-            //insert consultings from inputs to the ExpertConsultings table
-            $consultingsResponse = [];
-            for ($i = 0; $i < count($details['consultings']); $i++) {
-                //get the consulting id
-                $consulting = Consultings::where('name', $details['consultings'][$i])->pluck('id', 'name')->all();
-                $consultingsResponse[] = $consulting;
-                $expertConsulting = ExpertConsultings::create(
-                    [
-                        'user_id' => $expert->id,
-                        'consultings_id' => $consulting[$details['consultings'][$i]],
-                    ]
-                );
+            $weekdaysResponse = WeekDays::select('name', 'id')->whereIn('name', $details['days'])->get();
+            foreach ($weekdaysResponse as $weekday) {
+                ExpertDays::create([
+                    'user_id' => $expert->id,
+                    'weekdays_id' => $weekday->id,
+                    'start_day' => $details['start_day'],
+                    'end_day' => $details['end_day'],
+                ]);
             }
 
+            //insert consultings from inputs to the ExpertConsultings table
+            $consultingsResponse = Consultings::select('name', 'id')->whereIn('name', $details['consultings'])->get();
+            foreach ($consultingsResponse as $consultingR) {
+                ExpertConsultings::create(
+                    [
+                        'user_id' => $expert->id,
+                        'consultings_id' => $consultingR->id,
+                    ]
+                );
+            }
 
             //return response for expert
             return response()->json(
@@ -233,11 +221,13 @@ class HomeController extends Controller
                         'consultings' => $consultingsResponse,
                         'profile_picture' => $details['profile_picture'] = $request->profile_picture,
                         'rate' => 1,
-                        'skills' => $details['skills']
+                        'skills' => $details['skills'],
+                        'cost' => $details['cost']
 
                     ],
 
-                ]
+                ],
+                200
             );
         }
         //return response for user
@@ -246,7 +236,8 @@ class HomeController extends Controller
                 'message' => 'Expert successfully registered',
                 'token' => $token,
                 'user' => $expert,
-            ]
+            ],
+            200
         );
     }
 
@@ -258,7 +249,8 @@ class HomeController extends Controller
         return response()->json(
             [
                 'message' => 'Successfully logged out'
-            ]
+            ],
+            200
         );
     }
 
@@ -272,11 +264,42 @@ class HomeController extends Controller
         ]);
     }
 
-    public function consultingsSearch(Request $name)
+    //Consultings Serach
+    public function consultingsSearch($name)
     {
-
-
+        $result= Consultings::select('name' , 'id')->where('name' , 'LIKE' , "%$name%")->get();
+        return response()->json([
+            'Consultings'=>$result
+        ],200);
     }
 
+    //Expert Serach
+    public function expertsSearch($name)
+    {
+        $result= User::select('name' , 'id')->where('name' , 'LIKE' , "%$name%")->get();
+        return response()->json([
+            'experts'=>$result
+        ],200);
+    }
+    //Consultings
+    public function consultingExperts($id)
+    {
+        $usersId = ExpertConsultings::select('user_id')->where('consultings_id' ,$id)->get();
+        $result= User::select('name' , 'id')->whereIn('id' ,$usersId)->get();
+        return response()->json([
+            'experts'=>$result
+        ],200);
+    }
+    //Get Details to a specific expert
+    public function expertDetails($id)
+    {
+        # code...
+        $expert = User::select('name' , 'email' , 'phone' , 'address' , )->where('id' , $id)->get()->first();
+        $expertDetails = User::where('id' , $id)->get()->first()->userDetails()->select('skills' , 'cost' , 'rate')->get();
+        return response()->json([
+            'expert'=>$expert,
+            'expertDetails' =>$expertDetails
+        ],200);
+    }
 
 }

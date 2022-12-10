@@ -20,16 +20,17 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::post('/login' , [HomeController::class , 'login'])->name('home.login');
-Route::post('/register' , [HomeController::class , 'register'])->name('home.register');
+Route::post('/login', [HomeController::class, 'login'])->name('home.login');
+Route::post('/register', [HomeController::class, 'register'])->name('home.register');
 
 
-Route::group(['middleware' => 'auth:sanctum'] , function(){
-    Route::get('/home' , [HomeController::class , 'home'])->name('home.home');
-    Route::get('/logout' , [HomeController::class , 'logout'])->name('home.logout');
+Route::group(['middleware' => 'auth:sanctum'], function () {
+    Route::get('/home', [HomeController::class, 'home']);
+    Route::get('/logout', [HomeController::class, 'logout']);
+    Route::get('/consultings/search/{name}', [HomeController::class, 'consultingsSearch']);
+    Route::get('/consultings/{id}', [HomeController::class, 'consultingExperts']);
+    Route::get('/experts/search/{name}', [HomeController::class, 'expertsSearch']);
+    Route::get('/expert/{id}' , [HomeController::class , 'expertDetails']);
 });
 
-Route::get('/consultings' , [HomeController::class , 'getConsultings'])->name('home.getConsultings');
-
-
-
+Route::get('/consultings', [HomeController::class, 'getConsultings'])->name('home.getConsultings');
