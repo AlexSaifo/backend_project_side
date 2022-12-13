@@ -29,7 +29,7 @@ class ExpertController extends Controller
     {
         # code...
         $expert = User::select('name' , 'email' , 'phone' , 'address' , )->where('id' , $id)->get()->first();
-        $expertDetails = User::where('id' , $id)->get()->first()->userDetails()->select('skills' , 'cost' , 'rate')->get();
+        $expertDetails = User::where('id' , $id)->get()->first()->userDetails()->select('skills' , 'cost' , 'rating')->get();
         return response()->json([
             'expert'=>$expert,
             'expertDetails' =>$expertDetails

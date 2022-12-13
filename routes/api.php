@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Auth\SanctumController;
+use App\Http\Controllers\ConsultingController;
+use App\Http\Controllers\ExpertController;
 use App\Http\Controllers\HomeController;
 use App\Models\Consultings;
 use Illuminate\Http\Request;
@@ -28,10 +30,10 @@ Route::post('/register', [SanctumController::class, 'register'])->name('home.reg
 Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::get('/home', [HomeController::class, 'home']);
     Route::get('/logout', [SanctumController::class, 'logout']);
-    Route::get('/consultings/search/{name}', [HomeController::class, 'consultingsSearch']);
-    Route::get('/consultings/{id}', [HomeController::class, 'consultingExperts']);
-    Route::get('/experts/search/{name}', [HomeController::class, 'expertsSearch']);
-    Route::get('/expert/{id}' , [HomeController::class , 'expertDetails']);
+    Route::get('/consultings/search/{name}', [ConsultingController::class, 'consultingsSearch']);
+    Route::get('/consultings/{id}', [ConsultingController::class, 'consultingExperts']);
+    Route::get('/experts/search/{name}', [ExpertController::class, 'expertsSearch']);
+    Route::get('/expert/{id}' , [ExpertController::class , 'expertDetails']);
 });
 
-Route::get('/consultings', [HomeController::class, 'getConsultings'])->name('home.getConsultings');
+Route::get('/consultings', [ConsultingController::class, 'getConsultings'])->name('home.getConsultings');
