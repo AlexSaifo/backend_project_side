@@ -16,7 +16,8 @@ return new class extends Migration
         Schema::create('expert_detail', function (Blueprint $table) {
             $table->id();
             $table->string('skills');
-            $table->integer('rate')->default(1);
+            $table->integer('rating')->default(0);
+            $table->integer('ratings')->default(0);
             $table->double('cost');
             $table->unsignedBigInteger('user_id')->uniqid();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');

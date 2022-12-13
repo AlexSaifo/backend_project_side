@@ -12,18 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
-class HomeController extends Controller
+class UserController extends Controller
 {
-
-    //function for testing "you don't need it"
-    public function home()
-    {
-        $weekdays = WeekDays::where('id', 1)->first();
-        return response()->json(
-            [
-                'user' => 'access'
-            ]
-        );
-    }
-
+    //
 }
