@@ -210,7 +210,7 @@ class SanctumController extends Controller
                         'consultings' => $consultingsResponse,
                         'profile_picture' => $details['profile_picture'] = $request->profile_picture,
                         'rating' => 0,
-                        'ratings'=>0,
+                        'ratings' => 0,
                         'skills' => $details['skills'],
                         'cost' => $details['cost']
 
@@ -243,6 +243,4 @@ class SanctumController extends Controller
             200
         );
     }
-
-
 }

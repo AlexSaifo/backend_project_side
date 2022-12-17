@@ -38,10 +38,19 @@ class ConsultingController extends Controller
     ////Get Experts to a specific Consulting
     public function consultingExperts($id)
     {
-        $usersId = ExpertConsultings::select('user_id')->where('consultings_id', $id)->get();
-        $result = User::select('name', 'id')->whereIn('id', $usersId)->get();
-        return response()->json([
-            'experts' => $result
-        ], 200);
+
+        $consulting = Consultings::all()->find($id);
+        $result = null;
+        if ($consulting) {
+            $usersId = ExpertConsultings::select('user_id')->where('consultings_id', $consulting->id)->get();
+            $result = User::select('name', 'id')->whereIn('id', $usersId)->get();
+        }
+
+        return response()->json(
+            [
+                'experts' => $result
+            ],
+            ($result ? 200 : 400)
+        );
     }
 }
