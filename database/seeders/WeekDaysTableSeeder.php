@@ -15,7 +15,21 @@ class WeekDaysTableSeeder extends Seeder
      */
     public function run()
     {
-        //
-        WeekDays::factory()->count(7)->create();
+        //add  the week days into the database
+        for ($i = 0; $i < 7; $i++) {
+            WeekDays::Create(
+                ["name" => date('D', ($i + 3) * 60 * 60 * 24)]
+            );
+        }
+        /**
+         * Sun
+         * Mon
+         * Tue
+         * Wed
+         * Thu
+         * Fri
+         * Sat
+         *
+         **/
     }
 }

@@ -7,6 +7,8 @@ use App\Http\Controllers\HomeController;
 use App\Models\Consultings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ReservationController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -32,8 +34,11 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::get('/logout', [SanctumController::class, 'logout']);
     Route::get('/consultings/search/{name}', [ConsultingController::class, 'consultingsSearch']);
     Route::get('/consultings/{id}', [ConsultingController::class, 'consultingExperts']);
-    Route::get('/experts/search/{name}', [ExpertController::class, 'expertsSearch']);
-    Route::get('/expert/{id}' , [ExpertController::class , 'expertDetails']);
-});
 
+    Route::get('/reservation/available', [ReservationController::class, 'getAvailableAppointments']);
+    Route::get('/reservation/available', [ReservationController::class, 'getReservedAppointments']);
+    Route::post('/reservation/available', [ReservationController::class, 'makeReservation']);
+});
+Route::get('/experts/search/{name}', [ExpertController::class, 'expertsSearch']);
+Route::get('/expert/{id}', [ExpertController::class, 'expertDetails']);
 Route::get('/consultings', [ConsultingController::class, 'getConsultings'])->name('home.getConsultings');

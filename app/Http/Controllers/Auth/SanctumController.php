@@ -9,9 +9,13 @@ use App\Models\ExpertDays;
 use App\Models\ExpertDetails;
 use App\Models\User;
 use App\Models\WeekDays;
+use App\Models\ExpertAvailableAppointments;
+use App\Models\ExpertAppointments;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+
+
 
 class SanctumController extends Controller
 {
@@ -196,6 +200,27 @@ class SanctumController extends Controller
                     ]
                 );
             }
+            //insert week days into the Available Appoinments table
+            foreach ($details['days'] as $dayName) {
+                $currentTime = date_timestamp_get(date_create());
+                $currentTime = $currentTime - (($currentTime) % (60 * 60 * 24)) - 3600;
+                $currentTime += date_timestamp_get(date_create($details['start_day']))
+                    - date_timestamp_get(date_create('00:00:00'));
+                while ($dayName != date('D', $currentTime)) {
+                    $currentTime += 60 * 60 * 24;
+                }
+                $start_hour = $currentTime;
+                $end_hour = $start_hour + date_timestamp_get(date_create($details['end_day']))
+                - date_timestamp_get(date_create($details['start_day']));
+                ExpertAvailableAppointments::Create(
+                    [
+                        'start_hour' => $start_hour,
+                        'end_hour' => $end_hour,
+                        'user_id' => $expert->id
+                    ]
+                );
+            }
+            //end of insertion
 
             //return response for expert
             return response()->json(

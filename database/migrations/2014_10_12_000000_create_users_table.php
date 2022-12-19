@@ -36,6 +36,8 @@ return new class extends Migration
      */
     public function down()
     {
+        //SET FOREIGN_KEY_CHECKS=0;
         Schema::dropIfExists('users');
+        //SET FOREIGN_KEY_CHECKS=0;
     }
 };

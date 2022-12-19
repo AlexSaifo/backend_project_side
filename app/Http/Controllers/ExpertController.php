@@ -15,6 +15,11 @@ use Illuminate\Support\Facades\Validator;
 class ExpertController extends Controller
 {
 
+
+    public function __construct()
+    {
+        $this->middleware('auth:sanctum');
+    }
     //Expert Serach
     public function expertsSearch($name)
     {
@@ -47,5 +52,21 @@ class ExpertController extends Controller
             'expert' => $expert,
             'expertDetails' => $expertDetails
         ], ($expert ? 200 : 400));
+    }
+    // this function will calculate the deference between two times
+    // $end and $start should be strings 
+    private static function timeDeferecne($start, $end)
+    {
+        return date_timestamp_get(date_create($end)) - date_timestamp_get(date_create($start));
+    }
+
+    // this function will compare the number of seconds
+    // between $start and $end against the number of seconds in the week
+    private function is_week($start, $end)
+    {
+        $numOfSecondsByWeek = 60 * 60 * 24 * 7;
+        return (ExpertController::timeDeferecne($start, $end)
+            >= $numOfSecondsByWeek
+        );
     }
 }
