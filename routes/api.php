@@ -34,7 +34,6 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::get('/logout', [SanctumController::class, 'logout']);
     Route::get('/consultings/search/{name}', [ConsultingController::class, 'consultingsSearch']);
     Route::get('/consultings/{id}', [ConsultingController::class, 'consultingExperts']);
-
     Route::get('/reservation/available', [ReservationController::class, 'getAvailableAppointments']);
     Route::get('/reservation/available', [ReservationController::class, 'getReservedAppointments']);
     Route::post('/reservation/available', [ReservationController::class, 'makeReservation']);

@@ -53,7 +53,7 @@ class ReservationController extends Controller
     public function makeReservation(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'expert_id' => 'required',
+            'expert_id' => 'required|exists:users,id',
             'start_hour' => 'required',
             'end_hour' => 'required'
         ]);
