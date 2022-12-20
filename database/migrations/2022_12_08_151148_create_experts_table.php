@@ -19,8 +19,10 @@ return new class extends Migration
             $table->integer('rating')->default(0);
             $table->integer('ratings')->default(0);
             $table->double('cost');
+            
             $table->unsignedBigInteger('user_id')->uniqid();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+
             $table->string('profile_picture')->nullable();
             $table->timestamps();
         });

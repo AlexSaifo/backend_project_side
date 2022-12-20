@@ -13,5 +13,6 @@ class ExpertAppointments extends Model
         'start_hour',
         'end_hour',
         'user_id',
+        'consultant_id'
     ];
 }
