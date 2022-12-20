@@ -50,10 +50,9 @@ class ReservationController extends Controller
     }
 
     //make a reservation
-    public function makeReservation(Request $request)
+    public function makeReservation(Request $request,$expert_id)
     {
         $validator = Validator::make($request->all(), [
-            'expert_id' => 'required|exists:users,id',
             'start_hour' => 'required',
             'end_hour' => 'required'
         ]);
@@ -73,14 +72,13 @@ class ReservationController extends Controller
             "message" => null
         ];
         $user = $request->user(); // get curret user
-        $start_hour = date_timestamp_get(date_create($request->start_hour)); // get the start time of the appointment 
+        $start_hour = date_timestamp_get(date_create($request->start_hour)); // get the start time of the appointment
         $end_hour = date_timestamp_get(date_create($request->end_hour)); // get the start time of the appointment
-        $expert_id = $request->expert_id; // get expert id;
         $expert = User::where([
-            ['id', $expert_id],
-            ['is_expert', 1]
-        ])->get();
-        if (!$expert) { // expert_id is invalid
+            ['id','=',$expert_id],
+            ['is_expert','=', 1]
+        ])->get()->first();
+        if ($expert == null) { // expert_id is invalid
             $response['message'] = 'no such expert';
             return response()->json($response, 400);
         }
@@ -88,11 +86,11 @@ class ReservationController extends Controller
             $response['message'] = 'invalid duration';
             return response()->json($response, 400);
         }
-        $expert_detail = ExpertDetails::where('user_id', $expert->id)->first()->get();
+        $expert_detail = ExpertDetails::where('user_id', $expert->id)->get()->first();
         $current_time = date_timestamp_get(date_create());
         //refresh all appointments in the database
         ReservationController::refreshDatabase($expert_id);
-        //check the user's wallet 
+        //check the user's wallet
         $cost = ($end_hour - $start_hour) * (float)($expert_detail->cost) / 3600.0;
         if ($cost > $user->wallet) {
             $response['message'] = 'you do not have enough money';
@@ -150,14 +148,15 @@ class ReservationController extends Controller
         ];
         $expert = User::where([
             ['id', $expert_id],
-            ['is_expert', 1]
-        ])->get();
-        if (!$expert) { // expert_id is invalid
+            ['is_expert', '=',1]
+        ])->get()->first();
+
+        if ($expert == [] || $expert == null) { // expert_id is invalid
             $response['message'] = 'no such expert';
             return response()->json($response, 400);
         }
         //refresh all appointments in the database
-        ReservationController::refreshDatabase($expert_id);
+        $this->refreshDatabase($expert_id);
         // return the response
         $response = [
             'message' => 'success',
@@ -182,7 +181,7 @@ class ReservationController extends Controller
             ['user_id', '=', $user->id],
             ['start_hour', '>', date_timestamp_get(date_create())]
         ])->get();
-        $response["expert_details"] = ExpertDetails::where(['user_id', $user->id])->get();
+        $response["expert_details"] = ExpertDetails::where('user_id', $user->id)->get();
         $response["message"] = "Success";
         return response()->json($response, 200);
     }
