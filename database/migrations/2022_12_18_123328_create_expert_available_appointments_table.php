@@ -16,8 +16,8 @@ return new class extends Migration
         Schema::create('expert_available_appointments', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
-            $table->unsignedBigInteger('start_hour');
-            $table->unsignedBigInteger('end_hour');
+            $table->dateTime('start_hour');
+            $table->dateTime('end_hour');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
 
         });

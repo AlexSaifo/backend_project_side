@@ -16,8 +16,8 @@ return new class extends Migration
         Schema::create('expert_appointments', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
-            $table->unsignedBigInteger('start_hour');
-            $table->unsignedBigInteger('end_hour');
+            $table->dateTime('start_hour');
+            $table->dateTime('end_hour');
             $table->unsignedBigInteger('user_id')->uniqid();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->unsignedBigInteger('consultant_id')->uniqid();

@@ -40,8 +40,8 @@ class ReservationController extends Controller
                 $newEndHour = $newStarthour - ($newStarthour % (60 * 60 * 24)) + $expert_detail->end_day % (60 * 60 * 24);
                 ExpertAvailableAppointments::Create(
                     [
-                        'start_hour' => $newStarthour,
-                        'end_hour' => $newEndHour,
+                        'start_hour' => date("Y/m/d  H:i:s", $newStarthour),
+                        'end_hour' => date("Y/m/d  H:i:s", $newEndHour),
                         'user_id' => $expert_id
                     ]
                 );
@@ -72,8 +72,8 @@ class ReservationController extends Controller
             "message" => null
         ];
         $user = $request->user(); // get curret user
-        $start_hour = date_timestamp_get(date_create($request->start_hour)); // get the start time of the appointment
-        $end_hour = date_timestamp_get(date_create($request->end_hour)); // get the start time of the appointment
+        $start_hour = date_timestamp_get(date_create($request->start_hour)) + 60 * 60 - 3600; // get the start time of the appointment
+        $end_hour = date_timestamp_get(date_create($request->end_hour)) + 60 * 60 - 3600; // get the start time of the appointment
         $expert = User::where([
             ['id','=',$expert_id],
             ['is_expert','=', 1]
@@ -87,7 +87,7 @@ class ReservationController extends Controller
             return response()->json($response, 400);
         }
         $expert_detail = ExpertDetails::where('user_id', $expert->id)->get()->first();
-        $current_time = date_timestamp_get(date_create());
+        $current_time = date_timestamp_get(date_create()) - 3600;
         //refresh all appointments in the database
         ReservationController::refreshDatabase($expert_id);
         //check the user's wallet
@@ -98,11 +98,11 @@ class ReservationController extends Controller
         }
         $reservedAppointment = ExpertAvailableAppointments::where(
             [
-                ['start_hour', '<=', $start_hour],
-                ['end_hour', '>=', $end_hour],
+                ['start_hour', '<=', date("Y/m/d  H:i:s",$start_hour) ],
+                ['end_hour', '>=', date("Y/m/d  H:i:s",$end_hour) ],
                 ['user_id', $expert->id]
             ]
-        )->get();
+        )->first();
         // this appoint does not exits in the database!
         if (!$reservedAppointment) {
             $response['message'] = 'Invalid appointment!';
@@ -111,19 +111,19 @@ class ReservationController extends Controller
         //update the appointment
         ExpertAvailableAppointments::where(
             [
-                ['start_hour', '<=', $start_hour],
-                ['end_hour', '>=', $end_hour],
+                ['start_hour', '<=', date("Y/m/d  H:i:s",$start_hour)],
+                ['end_hour', '>=', date("Y/m/d  H:i:s",$end_hour)],
                 ['user_id', $expert->id]
             ]
-        )->update(['start_hour' => $start_hour]);
+        )->update(['start_hour' => date("Y/m/d  H:i:s",$end_hour)]);
         //update the user wallet
         User::find($user->id)->update(['wallet' => $user->wallet - $cost]);
         //update the expert wallet
         User::find($expert->id)->update(['wallet' => $user->wallet + $cost]);
         // insert the new appointment into the expert appointments table
         ExpertAppointments::Create([
-            'start_hour' => $start_hour,
-            'end_hour' => $end_hour,
+            'start_hour' => date("Y/m/d  H:i:s", $start_hour),
+            'end_hour' => date("Y/m/d  H:i:s", $end_hour),
             'user_id' => $expert->id,
             'consultant_id' => $user->id
         ]);
@@ -131,8 +131,8 @@ class ReservationController extends Controller
         $response = [
             "expert_detail" => $expert_detail,
             "expert" => $expert,
-            "start_date" => $start_hour,
-            "end_date" => $end_hour,
+            "start_date" => date("Y/m/d  H:i:s", $start_hour),
+            "end_date" => date("Y/m/d  H:i:s", $end_hour),
             "message" => 'Your appointment has been reserverd successfully!'
         ];
         return response()->json($response, 200);

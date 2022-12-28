@@ -19,6 +19,13 @@ use Illuminate\Support\Facades\Validator;
 
 class SanctumController extends Controller
 {
+
+    public function is_valid_week_day($dayName)
+    {
+        $found = WeekDays::where('name', '=', $dayName)->first();
+        return $found != null;
+    }
+
     //Login Function
     public function login(Request $request)
     {
@@ -145,6 +152,19 @@ class SanctumController extends Controller
             );
         }
 
+        if($request->is_expert){
+            foreach ($request->days as $dayName) {
+                if (!$this->is_valid_week_day($dayName)) {
+                    return response()->json(
+                        [
+                            'message' => ("invalid day name : ".$dayName)
+                        ],
+                        400
+                    );
+                }
+            }
+        }
+
         //create new expert
         $expert = User::create(array_merge(
             $validator->validated(),
@@ -164,10 +184,8 @@ class SanctumController extends Controller
                 $picture = $request->profile_picture;
                 $fileName = "profile-picture-{$expert->id}." . $picture->getClientOriginalExtension();
                 $picture->move(public_path('upload'), $fileName);
-
                 $request->profile_picture = $fileName;
             }
-
             ExpertDetails::create([
                 'skills' => $request->skills,
                 'profile_picture' => $request->profile_picture,
@@ -209,13 +227,13 @@ class SanctumController extends Controller
                 while ($dayName != date('D', $currentTime)) {
                     $currentTime += 60 * 60 * 24;
                 }
-                $start_hour = $currentTime;
+                $start_hour = $currentTime + 60 * 60;
                 $end_hour = $start_hour + date_timestamp_get(date_create($details['end_day']))
-                - date_timestamp_get(date_create($details['start_day']));
+                    - date_timestamp_get(date_create($details['start_day']));
                 ExpertAvailableAppointments::Create(
                     [
-                        'start_hour' => $start_hour,
-                        'end_hour' => $end_hour,
+                        'start_hour' => date('Y/m/d H:i:s', $start_hour),
+                        'end_hour' => date('Y/m/d H:i:s', $end_hour),
                         'user_id' => $expert->id
                     ]
                 );
