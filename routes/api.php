@@ -8,7 +8,7 @@ use App\Models\Consultings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ReservationController;
-
+use App\Http\Controllers\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -37,7 +37,9 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::get('/reservation/available/{id}', [ReservationController::class, 'getAvailableAppointments']);
     Route::get('/reservation/reserved', [ReservationController::class, 'getReservedAppointments']);
     Route::post('/reservation/reserve/{id}', [ReservationController::class, 'makeReservation']);
+    Route::get('/consultings', [ConsultingController::class, 'getConsultings'])->name('home.getConsultings');
+    Route::post('/rate/{expert_id}',[UserController::class,'rateExpert']);
 });
 Route::get('/experts/search/{name}', [ExpertController::class, 'expertsSearch']);
 Route::get('/expert/{id}', [ExpertController::class, 'expertDetails']);
-Route::get('/consultings', [ConsultingController::class, 'getConsultings'])->name('home.getConsultings');
+
