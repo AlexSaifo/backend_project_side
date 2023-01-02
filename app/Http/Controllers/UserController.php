@@ -9,6 +9,7 @@ use App\Models\ExpertDetails;
 use App\Models\ExpertRatings;
 use App\Models\User;
 use App\Models\WeekDays;
+use App\Models\FavoriteList;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -21,7 +22,7 @@ class UserController extends Controller
     {
         $response = [
             'epxert' => null,
-            'message' => null
+            'message' => null,
         ];
         $user_id = Auth::user()->id;
         $expert = DB::table('users')->join('expert_detail', 'expert_detail.user_id', '=', 'users.id')
@@ -62,7 +63,7 @@ class UserController extends Controller
                 ['user_id', '=', $user_id]
             ])->first()->delete();
             $expert = DB::table('users')->join('expert_detail', 'expert_detail.user_id', '=', 'users.id')
-            ->where('users.id', '=', $expert_id)->first();
+                ->where('users.id', '=', $expert_id)->first();
         }
         // insert the new rating into the data base
         ExpertDetails::where('user_id', '=', $expert_id)
@@ -75,10 +76,77 @@ class UserController extends Controller
             'user_id' => $user_id,
             'rating' => $new_rating
         ]);
+        //update '$expert' variable value and return the response
         $expert = DB::table('users')->join('expert_detail', 'expert_detail.user_id', '=', 'users.id')
             ->where('users.id', '=', $expert_id)->first();
         $response['expert'] = $expert;
         $response['message'] = 'success';
+        return response()->json($response, 200);
+    }
+
+    public function addExpert(Request $request, $expert_id)
+    {
+        $response = [
+            'message' => null,
+            'favorite_list' => null
+        ];
+        $user_id = Auth::user()->id;
+        $expert = DB::table('users')->join('expert_detail', 'expert_detail.user_id', '=', 'users.id')
+            ->where('users.id', '=', $expert_id)->first();
+        // invalid expert id
+        if (!$expert) {
+            $response['message'] = "no such expert";
+            return response()->json($response, 400);
+        }
+        // the expert is trying to add himself to his favorite list 🤣
+        if ($user_id == $expert_id) {
+            $response['message'] = 'ha ha ha 🤣🤣';
+            return response()->json($response, 406); // not acceptable
+        }
+        //check if this expert already exists in the user's favorite list
+        if (FavoriteList::where(
+            [
+                ['user_id', '=', $user_id],
+                ['expert_id', '=', $expert_id]
+            ]
+        )->exists()) {
+            $response['message'] = 'this expert already in your favorite list!';
+            return response()->json($response, 400);
+        }
+        // add this expert to the favorite list
+        FavoriteList::create([
+            'expert_id' => $expert_id,
+            'user_id' => $user_id
+        ]);
+        // fill out the $response with data 
+        $response['message'] = 'the expert has been added to your favorite list successfully';
+        // 'favorite_list' variable cotains a list of all experts in the user's favorite
+        $response['favorite_list'] = DB::table('users')
+            ->join('expert_detail', 'expert_detail.user_id', '=', 'users.id')
+            ->join('favorite_lists', 'favorite_lists.expert_id', '=', 'users.id')
+            ->where('favorite_lists.user_id', '=', $user_id)->get();
+        return response()->json($response, 200);
+    }
+    public function getFavoriteList()
+    {
+        $infoRequired = [
+            'users.id',
+            'users.name',
+            'users.email',
+            'users.phone',
+            'users.address',
+            'users.wallet',
+            'expert_detail.skills',
+            'expert_detail.rating',
+            'expert_detail.cost',
+            'expert_detail.profile_picture'
+        ];
+        $response = [
+            "favorite_list" => null
+        ];
+        $response['favorite_list'] = FavoriteList::join('users', 'users.id', '=', 'favorite_lists.expert_id')
+            ->join('expert_detail', 'expert_detail.user_id', '=', 'users.id')
+            ->where('favorite_lists.user_id', '=', Auth::user()->id)->get($infoRequired);
         return response()->json($response, 200);
     }
 }

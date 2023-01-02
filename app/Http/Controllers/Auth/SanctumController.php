@@ -125,7 +125,7 @@ class SanctumController extends Controller
                 'consultings' => 'required',
                 'start_day' => 'required',
                 'end_day' => 'required',
-                'profile_picture' => 'required|mimes:png,jpg,bmp,jpeg',
+                'profile_picture' => 'nullable|mimes:png,jpg,bmp,jpeg',
                 'is_expert' => 'required'
             ]);
         } else {
