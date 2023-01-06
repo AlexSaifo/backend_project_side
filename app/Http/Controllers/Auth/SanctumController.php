@@ -15,14 +15,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
-
-
 class SanctumController extends Controller
 {
 
     public function is_valid_week_day($dayName)
     {
         $found = WeekDays::where('name', '=', $dayName)->first();
+        return $found != null;
+    }
+
+    public function is_valid_consulting($consulting)
+    {
+        $found = Consultings::where('name', '=', $consulting)->first();
         return $found != null;
     }
 
@@ -152,12 +156,15 @@ class SanctumController extends Controller
             );
         }
 
-        if($request->is_expert){
-            foreach ($request->days as $dayName) {
+
+        $DaysReq = json_decode($request->days);
+        if ($request->is_expert) {
+
+            foreach ($DaysReq as $dayName) {
                 if (!$this->is_valid_week_day($dayName)) {
                     return response()->json(
                         [
-                            'message' => ("invalid day name : ".$dayName)
+                            'message' => ("invalid day name : " . $dayName)
                         ],
                         400
                     );
@@ -175,103 +182,130 @@ class SanctumController extends Controller
         $tokenResult = $expert->createToken('Personal Access Token');
         $token = $tokenResult->plainTextToken;
 
+        try {
 
-        //for expert only
-        if ($request->is_expert) {
-            //create new expert details
-            if ($request->hasFile('profile_picture')) {
 
-                $picture = $request->profile_picture;
-                $fileName = "profile-picture-{$expert->id}." . $picture->getClientOriginalExtension();
-                $picture->move(public_path('upload'), $fileName);
-                $request->profile_picture = $fileName;
-            }
-            ExpertDetails::create([
-                'skills' => $request->skills,
-                'profile_picture' => $request->profile_picture,
-                'user_id' => $expert->id,
-                'cost' => $request->cost,
-                'updated_at' => now(),
-                'created_at' => now(),
-            ]);
+            //for expert only
+            if ($request->is_expert) {
+                //create new expert details
+                if ($request->hasFile('profile_picture')) {
 
-            $details = $validator->validated();
-
-            //insert expertd days from inputs to the Expert Days table
-            $weekdaysResponse = WeekDays::select('name', 'id')->whereIn('name', $details['days'])->get();
-            foreach ($weekdaysResponse as $weekday) {
-                ExpertDays::create([
-                    'user_id' => $expert->id,
-                    'weekdays_id' => $weekday->id,
-                    'start_day' => $details['start_day'],
-                    'end_day' => $details['end_day'],
-                ]);
-            }
-
-            //insert consultings from inputs to the ExpertConsultings table
-            $consultingsResponse = Consultings::select('name', 'id')->whereIn('name', $details['consultings'])->get();
-            foreach ($consultingsResponse as $consultingR) {
-                ExpertConsultings::create(
-                    [
-                        'user_id' => $expert->id,
-                        'consultings_id' => $consultingR->id,
-                    ]
-                );
-            }
-            //insert week days into the Available Appoinments table
-            foreach ($details['days'] as $dayName) {
-                $currentTime = date_timestamp_get(date_create());
-                $currentTime = $currentTime - (($currentTime) % (60 * 60 * 24)) - 3600;
-                $currentTime += date_timestamp_get(date_create($details['start_day']))
-                    - date_timestamp_get(date_create('00:00:00'));
-                while ($dayName != date('D', $currentTime)) {
-                    $currentTime += 60 * 60 * 24;
+                    $picture = $request->profile_picture;
+                    $fileName = "profile-picture-{$expert->id}." . $picture->getClientOriginalExtension();
+                    $picture->move(public_path('upload'), $fileName);
+                    $request->profile_picture = $fileName;
                 }
-                $start_hour = $currentTime + 60 * 60;
-                $end_hour = $start_hour + date_timestamp_get(date_create($details['end_day']))
-                    - date_timestamp_get(date_create($details['start_day']));
-                ExpertAvailableAppointments::Create(
-                    [
-                        'start_hour' => date('Y/m/d H:i:s', $start_hour),
-                        'end_hour' => date('Y/m/d H:i:s', $end_hour),
-                        'user_id' => $expert->id
-                    ]
-                );
-            }
-            //end of insertion
+                ExpertDetails::create([
+                    'skills' => $request->skills,
+                    'profile_picture' => $request->profile_picture,
+                    'user_id' => $expert->id,
+                    'cost' => $request->cost,
+                    'updated_at' => now(),
+                    'created_at' => now(),
+                ]);
 
-            //return response for expert
-            return response()->json(
-                [
-                    'message' => 'Expert successfully registered',
-                    'token' => $token,
-                    'user' => $expert,
-                    'user_detail' => [
-                        'expert_days' => $weekdaysResponse,
+                $details = $validator->validated();
+                $details['consultings'] = json_decode($request->consultings);
+                if ($request->is_expert) {
+
+                    foreach ( $details['consultings'] as $consulting) {
+                        if (!$this->is_valid_consulting($consulting)) {
+                            $expert->delete();
+                            return response()->json(
+                                [
+                                    'message' => ("invalid consulting name : " . $consulting)
+                                ],
+                                400
+                            );
+                        }
+                    }
+                }
+
+                //insert expertd days from inputs to the Expert Days table
+                $weekdaysResponse = WeekDays::select('name', 'id')->whereIn('name', $DaysReq)->get();
+                foreach ($weekdaysResponse as $weekday) {
+                    ExpertDays::create([
+                        'user_id' => $expert->id,
+                        'weekdays_id' => $weekday->id,
                         'start_day' => $details['start_day'],
                         'end_day' => $details['end_day'],
-                        'consultings' => $consultingsResponse,
-                        'profile_picture' => $details['profile_picture'] = $request->profile_picture,
-                        'rating' => 0,
-                        'ratings' => 0,
-                        'skills' => $details['skills'],
-                        'cost' => $details['cost']
+                    ]);
+                }
+
+                //insert consultings from inputs to the ExpertConsultings table
+                $consultingsResponse = Consultings::select('name', 'id')->whereIn('name', $details['consultings'])->get();
+                foreach ($consultingsResponse as $consultingR) {
+                    ExpertConsultings::create(
+                        [
+                            'user_id' => $expert->id,
+                            'consultings_id' => $consultingR->id,
+                        ]
+                    );
+                }
+                //insert week days into the Available Appoinments table
+                foreach ($DaysReq as $dayName) {
+                    $currentTime = date_timestamp_get(date_create());
+                    $currentTime = $currentTime - (($currentTime) % (60 * 60 * 24)) - 3600;
+                    $currentTime += date_timestamp_get(date_create($details['start_day']))
+                        - date_timestamp_get(date_create('00:00:00'));
+                    while ($dayName != date('D', $currentTime)) {
+                        $currentTime += 60 * 60 * 24;
+                    }
+                    $start_hour = $currentTime + 60 * 60;
+                    $end_hour = $start_hour + date_timestamp_get(date_create($details['end_day']))
+                        - date_timestamp_get(date_create($details['start_day']));
+                    ExpertAvailableAppointments::Create(
+                        [
+                            'start_hour' => date('Y/m/d H:i:s', $start_hour),
+                            'end_hour' => date('Y/m/d H:i:s', $end_hour),
+                            'user_id' => $expert->id
+                        ]
+                    );
+                }
+                //end of insertion
+
+                //return response for expert
+                return response()->json(
+                    [
+                        'message' => 'Expert successfully registered',
+                        'token' => $token,
+                        'user' => $expert,
+                        'user_detail' => [
+                            'expert_days' => $weekdaysResponse,
+                            'start_day' => $details['start_day'],
+                            'end_day' => $details['end_day'],
+                            'consultings' => $consultingsResponse,
+                            'profile_picture' => $details['profile_picture'] = $request->profile_picture,
+                            'rating' => 0,
+                            'ratings' => 0,
+                            'skills' => $details['skills'],
+                            'cost' => $details['cost']
+
+                        ],
 
                     ],
-
+                    200
+                );
+            }
+            //return response for user
+            return response()->json(
+                [
+                    'message' => 'User successfully registered',
+                    'token' => $token,
+                    'user' => $expert,
                 ],
                 200
             );
+        } catch (\Throwable $th) {
+
+            $expert->delete();
+            return response()->json(
+                [
+                    'message' => $th->getMessage()
+                ],
+                400
+            );
         }
-        //return response for user
-        return response()->json(
-            [
-                'message' => 'User successfully registered',
-                'token' => $token,
-                'user' => $expert,
-            ],
-            200
-        );
     }
 
     //Logout

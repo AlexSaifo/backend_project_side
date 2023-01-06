@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\SanctumController;
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ConsultingController;
 use App\Http\Controllers\ExpertController;
 use App\Http\Controllers\HomeController;
@@ -41,7 +42,12 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::post('/rate/{expert_id}',[UserController::class,'rateExpert']);
     Route::post('/favorite_list/{id}',[UserController::class,'addExpert']);
     Route::get('/favorite_list',[UserController::class,'getFavoriteList']);
+
+
+
+
 });
 Route::get('/experts/search/{name}', [ExpertController::class, 'expertsSearch']);
 Route::get('/expert/{id}', [ExpertController::class, 'expertDetails']);
 
+Route::post('/send-message' , [ChatController::class , 'SendMessage']);
