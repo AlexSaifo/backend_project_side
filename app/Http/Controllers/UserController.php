@@ -21,7 +21,7 @@ class UserController extends Controller
     public function rateExpert(Request $request, $expert_id)
     {
         $response = [
-            'epxert' => null,
+            'expert' => null,
             'message' => null,
         ];
         $user_id = Auth::user()->id;

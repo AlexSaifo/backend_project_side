@@ -67,4 +67,14 @@ class User extends Authenticatable
         # code...
         return $this->hasMany(ExpertConsultings::class);
     }
+
+    public function favorite_list()
+    {
+        return $this->hasMany(FavoriteList::class);
+    }
+
+    public function ratings()
+    {
+        return $this->hasMany(ExpertRatings::class);
+    }
 }

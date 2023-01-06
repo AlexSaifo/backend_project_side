@@ -22,9 +22,8 @@ class ExpertDetails extends Model
         'created_at'
 
     ];
-
-
-    public function users(){
+    public function users()
+    {
         return $this->belongsTo(User::class);
     }
 }

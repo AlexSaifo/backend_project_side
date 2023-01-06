@@ -12,4 +12,14 @@ class FavoriteList extends Model
         'expert_id',
         'user_id',
     ];
+
+    public function experts()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function users()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

@@ -50,7 +50,7 @@ class ReservationController extends Controller
     }
 
     //make a reservation
-    public function makeReservation(Request $request,$expert_id)
+    public function makeReservation(Request $request, $expert_id)
     {
         $validator = Validator::make($request->all(), [
             'start_hour' => 'required',
@@ -75,13 +75,20 @@ class ReservationController extends Controller
         $start_hour = date_timestamp_get(date_create($request->start_hour)) + 60 * 60 - 3600; // get the start time of the appointment
         $end_hour = date_timestamp_get(date_create($request->end_hour)) + 60 * 60 - 3600; // get the start time of the appointment
         $expert = User::where([
-            ['id','=',$expert_id],
-            ['is_expert','=', 1]
+            ['id', '=', $expert_id],
+            ['is_expert', '=', 1]
         ])->get()->first();
         if ($expert == null) { // expert_id is invalid
             $response['message'] = 'no such expert';
             return response()->json($response, 400);
         }
+        //The Expert is trying to make a reservation with himself
+        if ($user->id == $expert_id) {
+            $response['message'] = 'you can not make this reservation!';
+            return response()->json($response, 400);
+        }
+
+
         if ($start_hour >= $end_hour) {
             $response['message'] = 'invalid duration';
             return response()->json($response, 400);
@@ -98,8 +105,8 @@ class ReservationController extends Controller
         }
         $reservedAppointment = ExpertAvailableAppointments::where(
             [
-                ['start_hour', '<=', date("Y/m/d  H:i:s",$start_hour) ],
-                ['end_hour', '>=', date("Y/m/d  H:i:s",$end_hour) ],
+                ['start_hour', '<=', date("Y/m/d  H:i:s", $start_hour)],
+                ['end_hour', '>=', date("Y/m/d  H:i:s", $end_hour)],
                 ['user_id', $expert->id]
             ]
         )->first();
@@ -111,11 +118,11 @@ class ReservationController extends Controller
         //update the appointment
         ExpertAvailableAppointments::where(
             [
-                ['start_hour', '<=', date("Y/m/d  H:i:s",$start_hour)],
-                ['end_hour', '>=', date("Y/m/d  H:i:s",$end_hour)],
+                ['start_hour', '<=', date("Y/m/d  H:i:s", $start_hour)],
+                ['end_hour', '>=', date("Y/m/d  H:i:s", $end_hour)],
                 ['user_id', $expert->id]
             ]
-        )->update(['start_hour' => date("Y/m/d  H:i:s",$end_hour)]);
+        )->update(['start_hour' => date("Y/m/d  H:i:s", $end_hour)]);
         //update the user wallet
         User::find($user->id)->update(['wallet' => $user->wallet - $cost]);
         //update the expert wallet
@@ -148,7 +155,7 @@ class ReservationController extends Controller
         ];
         $expert = User::where([
             ['id', $expert_id],
-            ['is_expert', '=',1]
+            ['is_expert', '=', 1]
         ])->get()->first();
 
         if ($expert == [] || $expert == null) { // expert_id is invalid

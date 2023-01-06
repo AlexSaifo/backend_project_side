@@ -14,5 +14,13 @@ class ExpertRatings extends Model
         'user_id',
         'rating'
     ];
+    public function experts(){
+        return $this->belongsTo(User::class);
+    }
+
+    public function users()
+    {
+        return $this->belongsTo(User::class);
+    }
 
 }
