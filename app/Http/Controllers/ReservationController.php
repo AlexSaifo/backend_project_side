@@ -174,6 +174,31 @@ class ReservationController extends Controller
     // show all appointments reserved for an expert
     public function getReservedAppointments(Request $request)
     {
+        $requiredExpertInfo = [
+            'users.id',
+            'skills',
+            'rating',
+            'ratings',
+            'cost',
+            'profile_picture',
+            'name',
+            'email',
+            'phone',
+            'address',
+            'wallet',
+            'is_expert'
+        ];
+        $requiredUserInfo = [
+            'users.id',
+            'name',
+            'email',
+            'phone',
+            'address',
+            'is_expert',
+            'start_hour',
+            'end_hour',
+
+        ];
         $response = [
             "data" => null,
             "message" => null,
@@ -184,12 +209,17 @@ class ReservationController extends Controller
             $response["message"] = "You'r not an expert";
             return response()->json($response, 400);
         }
-        $response["data"] = ExpertAppointments::where([
+        $response["data"] = ExpertAppointments::join('users','users.id','=','expert_appointments.consultant_id')
+        ->where([
             ['user_id', '=', $user->id],
             ['start_hour', '>', date_timestamp_get(date_create())]
-        ])->get();
-        $response["expert_details"] = ExpertDetails::where('user_id', $user->id)->get();
+        ])->get($requiredUserInfo);
+        $response["expert_details"] = ExpertDetails::join('users','users.id','=','expert_detail.user_id')
+        ->where('expert_detail.user_id', $user->id)->get($requiredExpertInfo);
         $response["message"] = "Success";
+        foreach($response["data"] as $app){
+            $app['day_name'] = date('D',date_timestamp_get(date_create($app['start_hour'])));
+        }
         return response()->json($response, 200);
     }
 }
