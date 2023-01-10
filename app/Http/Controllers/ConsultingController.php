@@ -24,6 +24,17 @@ class ConsultingController extends Controller
         ]);
     }
 
+    public function getAllDays()
+    {
+        # code...
+        $days = WeekDays::all();
+        return response()->json([
+            'WeekDays' => $days
+        ]);
+    }
+
+
+
     //Consultings Serach
     public function consultingsSearch($name)
     {

@@ -38,16 +38,15 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::get('/reservation/available/{id}', [ReservationController::class, 'getAvailableAppointments']);
     Route::get('/reservation/reserved', [ReservationController::class, 'getReservedAppointments']);
     Route::post('/reservation/reserve/{id}', [ReservationController::class, 'makeReservation']);
-    Route::get('/consultings', [ConsultingController::class, 'getConsultings'])->name('home.getConsultings');
-    Route::post('/rate/{expert_id}',[UserController::class,'rateExpert']);
-    Route::post('/favorite_list/{id}',[UserController::class,'addExpert']);
-    Route::get('/favorite_list',[UserController::class,'getFavoriteList']);
-
-
-
-
+    Route::post('/rate/{expert_id}', [UserController::class, 'rateExpert']);
+    Route::post('/favorite_list/{id}', [UserController::class, 'addExpert']);
+    Route::get('/favorite_list', [UserController::class, 'getFavoriteList']);
 });
 Route::get('/experts/search/{name}', [ExpertController::class, 'expertsSearch']);
 Route::get('/expert/{id}', [ExpertController::class, 'expertDetails']);
 
-Route::post('/send-message' , [ChatController::class , 'SendMessage']);
+Route::get('/consultings', [ConsultingController::class, 'getConsultings'])->name('home.getConsultings');
+Route::get('/weekdays', [ConsultingController::class, 'getAllDays'])->name('home.getAllDays');
+
+
+Route::post('/send-message', [ChatController::class, 'SendMessage']);
