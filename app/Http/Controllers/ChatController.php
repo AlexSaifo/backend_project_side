@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Events\MyMessage;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 class ChatController extends Controller
@@ -21,7 +22,7 @@ class ChatController extends Controller
         # code... sender and receiver
 
         $validator = Validator::make($request->all(), [
-            'sender_id' => 'required|exists:users,id',
+
             'receiver_id' => 'required|exists:users,id',
             'message' => 'required'
         ]);
@@ -38,7 +39,7 @@ class ChatController extends Controller
         }
 
 
-        $senderID = $request->sender_id;
+        $senderID = Auth::user()->id;
         $senderName = User::find($senderID)->name;
 
         $receiverID = $request->receiver_id;

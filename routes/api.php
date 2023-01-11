@@ -41,6 +41,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::post('/rate/{expert_id}', [UserController::class, 'rateExpert']);
     Route::post('/favorite_list/{id}', [UserController::class, 'addExpert']);
     Route::get('/favorite_list', [UserController::class, 'getFavoriteList']);
+    Route::post('/send-message', [ChatController::class, 'SendMessage']);
+
 });
 Route::get('/experts/search/{name}', [ExpertController::class, 'expertsSearch']);
 Route::get('/expert/{id}', [ExpertController::class, 'expertDetails']);
@@ -49,4 +51,3 @@ Route::get('/consultings', [ConsultingController::class, 'getConsultings'])->nam
 Route::get('/weekdays', [ConsultingController::class, 'getAllDays'])->name('home.getAllDays');
 
 
-Route::post('/send-message', [ChatController::class, 'SendMessage']);
