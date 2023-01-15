@@ -9,6 +9,8 @@ use App\Models\ExpertDays;
 use App\Models\ExpertDetails;
 use App\Models\ExpertAvailableAppointments;
 use App\Models\User;
+use Error;
+use Exception;
 use Illuminate\Support\Facades\Validator;
 
 class ReservationController extends Controller
@@ -18,26 +20,23 @@ class ReservationController extends Controller
     // refresh appointments in the database
     private function refreshDatabase($expert_id)
     {
-        $available_appointments = ExpertAvailableAppointments::where(
-            [
-                ['user_id', $expert_id]
-            ]
-        );
-        $expert_detail = ExpertDetails::where('user_id', $expert_id)->first()->get();
+        $available_appointments = ExpertAvailableAppointments::where('user_id', $expert_id)->get();
+        $expert_detail = ExpertDays::where('user_id', $expert_id)->first();
         $current_time = date_timestamp_get(date_create());
+        $expert_detail->start_day = date_timestamp_get(date_create($expert_detail->start_day));
+        $expert_detail->end_day = date_timestamp_get(date_create($expert_detail->end_day));
         foreach ($available_appointments as $available_appointment) {
             // check if this appoinment is expired
+            $available_appointment->start_hour = date_timestamp_get(date_create($available_appointment->start_hour));
             if ($available_appointment->start_hour < $current_time) {
-                // this appointment should be deleted and add a new one
-                ExpertAvailableAppointments::find($available_appointment->id)->delet();
                 //calculate the new appointment start hour
-                $newStarthour = $available_appointment->start_id;
+                $newStarthour = $available_appointment->start_hour;
                 $newStarthour -= ($newStarthour % (60 * 60 * 24));
-                $newStarthour += $expert_detail->start_day % (60 * 60 * 24);
+                $newStarthour += ($expert_detail->start_day % (60 * 60 * 24));
                 while ($newStarthour < $current_time) {
                     $newStarthour += (60 * 60 * 24 * 7);
                 }
-                $newEndHour = $newStarthour - ($newStarthour % (60 * 60 * 24)) + $expert_detail->end_day % (60 * 60 * 24);
+                $newEndHour = $newStarthour - ($newStarthour % (60 * 60 * 24)) + ($expert_detail->end_day % (60 * 60 * 24));
                 ExpertAvailableAppointments::Create(
                     [
                         'start_hour' => date("Y/m/d  H:i:s", $newStarthour),
@@ -45,6 +44,8 @@ class ReservationController extends Controller
                         'user_id' => $expert_id
                     ]
                 );
+                // this appointment should be deleted and add a new one
+                ExpertAvailableAppointments::find($available_appointment->id)->delete();
             }
         } //now all the appointments in the Database are valid
     }
@@ -72,8 +73,13 @@ class ReservationController extends Controller
             "message" => null
         ];
         $user = $request->user(); // get curret user
-        $start_hour = date_timestamp_get(date_create($request->start_hour)) + 60 * 60 - 3600; // get the start time of the appointment
-        $end_hour = date_timestamp_get(date_create($request->end_hour)) + 60 * 60 - 3600; // get the start time of the appointment
+        try {
+            $start_hour = date_timestamp_get(date_create($request->start_hour)) + 60 * 60 - 3600; // get the start time of the appointment
+            $end_hour = date_timestamp_get(date_create($request->end_hour)) + 60 * 60 - 3600; // get the start time of the appointment
+        } catch (Error $ex) {
+            $response['message'] = 'Invalid date format';
+            return response()->json($response, 400);
+        }
         $expert = User::where([
             ['id', '=', $expert_id],
             ['is_expert', '=', 1]
@@ -89,7 +95,7 @@ class ReservationController extends Controller
         }
 
 
-        if ($start_hour >= $end_hour) {
+        if ($end_hour - $start_hour <= 30 * 60) {
             $response['message'] = 'invalid duration';
             return response()->json($response, 400);
         }
@@ -105,7 +111,7 @@ class ReservationController extends Controller
         }
         $reservedAppointment = ExpertAvailableAppointments::where(
             [
-                ['start_hour', '<=', date("Y/m/d  H:i:s", $start_hour)],
+                ['start_hour', '=', date("Y/m/d  H:i:s", $start_hour)],
                 ['end_hour', '>=', date("Y/m/d  H:i:s", $end_hour)],
                 ['user_id', $expert->id]
             ]
@@ -164,11 +170,20 @@ class ReservationController extends Controller
         }
         //refresh all appointments in the database
         $this->refreshDatabase($expert_id);
+        $appointments = ExpertAvailableAppointments::where('user_id', $expert_id)->get(['start_hour', 'end_hour', 'user_id']);
         // return the response
         $response = [
             'message' => 'success',
-            'appointments' => ExpertAvailableAppointments::where('user_id', $expert_id)->get()
+            'appointments' => []
         ];
+        foreach ($appointments as $appointment) {
+            if (
+                date_timestamp_get(date_create($appointment->end_hour))
+                - date_timestamp_get(date_create($appointment->start_hour))
+                > 30 * 60
+            )
+                $response['appointments'][] = $appointment;
+        }
         return response()->json($response, 200);
     }
     // show all appointments reserved for an expert
@@ -209,16 +224,16 @@ class ReservationController extends Controller
             $response["message"] = "You'r not an expert";
             return response()->json($response, 400);
         }
-        $response["data"] = ExpertAppointments::join('users','users.id','=','expert_appointments.consultant_id')
-        ->where([
-            ['user_id', '=', $user->id],
-            ['start_hour', '>', date_timestamp_get(date_create())]
-        ])->get($requiredUserInfo);
-        $response["expert_details"] = ExpertDetails::join('users','users.id','=','expert_detail.user_id')
-        ->where('expert_detail.user_id', $user->id)->get($requiredExpertInfo);
+        $response["data"] = ExpertAppointments::join('users', 'users.id', '=', 'expert_appointments.consultant_id')
+            ->where([
+                ['user_id', '=', $user->id],
+                ['start_hour', '>', date_timestamp_get(date_create())]
+            ])->get($requiredUserInfo);
+        $response["expert_details"] = ExpertDetails::join('users', 'users.id', '=', 'expert_detail.user_id')
+            ->where('expert_detail.user_id', $user->id)->get($requiredExpertInfo);
         $response["message"] = "Success";
-        foreach($response["data"] as $app){
-            $app['day_name'] = date('D',date_timestamp_get(date_create($app['start_hour'])));
+        foreach ($response["data"] as $app) {
+            $app['day_name'] = date('D', date_timestamp_get(date_create($app['start_hour'])));
         }
         return response()->json($response, 200);
     }
